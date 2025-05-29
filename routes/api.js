@@ -1,7 +1,7 @@
 'use strict';
 
 // เรียกใช้โมดูล node-fetch สำหรับการเรียก API
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // เรียกใช้โมดูล crypto สำหรับการเข้ารหัส (hashing)
 const crypto = require('crypto');
@@ -37,8 +37,9 @@ module.exports = function (app) {
       const stockData = await Promise.all(
         stocks.map(async (symbol) => {
           // เรียก API proxy เพื่อดึงราคาหุ้น
-          const response = await fetch(`https://stock-price-checker-proxy.freecodecamp.rocks/stock/${symbol}`);
+          const response = await fetch(`https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/${symbol}/quote`);
           const data = await response.json();
+          console.log('Data from proxy API:', data);
 
           // ถ้ายังไม่มีข้อมูลไลค์สำหรับหุ้นนี้ ให้สร้าง Set ใหม่
           if (!stockLikes[symbol]) {
@@ -80,6 +81,7 @@ module.exports = function (app) {
       }
     } catch (error) {
       // จัดการข้อผิดพลาดในการดึงข้อมูล
+      console.error(error);
       res.status(500).json({ error: 'Unable to fetch stock data' });
     }
   });
