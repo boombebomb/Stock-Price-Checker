@@ -54,7 +54,7 @@ module.exports = function (app) {
           // คืนค่าอ็อบเจกต์ที่มี symbol หุ้น ราคา และจำนวนไลค์ทั้งหมด
           return {
             stock: symbol,
-            price: data.price,
+            price: data.ticker.last,
             likes: stockLikes[symbol].size,
           };
         })

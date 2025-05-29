@@ -36,25 +36,6 @@ app.use(cors({origin: '*'})); //For FCC testing purposes only
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// เส้นทางสำหรับหน้า Index (HTML static)
-app.route('/')
-  .get(function (req, res) {
-    res.sendFile(process.cwd() + '/views/index.html');
-  });
-
-// เรียกใช้ routes สำหรับ FCC testing
-fccTestingRoutes(app);
-
-// เรียกใช้ routes สำหรับ API
-apiRoutes(app);
-
-// Middleware สำหรับจัดการข้อผิดพลาด 404 Not Found
-app.use(function(req, res, next) {
-  res.status(404)
-    .type('text')
-    .send('Not Found');
-});
-
 // ใช้ Helmet เพื่อเพิ่มความปลอดภัยให้กับแอปพลิเคชัน
 app.use(
   helmet.contentSecurityPolicy({
@@ -80,6 +61,25 @@ app.use(helmet.dnsPrefetchControl());
 
 // ซ่อน X-Powered-By header และตั้งค่าเป็น 'PHP 7.4' เพื่อปกปิดเทคโนโลยีที่ใช้
 app.use(helmet.hidePoweredBy({ setTo: 'PHP 7.4' }));
+
+// เส้นทางสำหรับหน้า Index (HTML static)
+app.route('/')
+  .get(function (req, res) {
+    res.sendFile(process.cwd() + '/views/index.html');
+  });
+
+// เรียกใช้ routes สำหรับ FCC testing
+fccTestingRoutes(app);
+
+// เรียกใช้ routes สำหรับ API
+apiRoutes(app);
+
+// Middleware สำหรับจัดการข้อผิดพลาด 404 Not Found
+app.use(function(req, res, next) {
+  res.status(404)
+    .type('text')
+    .send('Not Found');
+});
 
 // เริ่มต้น server และทำการทดสอบ
 const listener = app.listen(process.env.PORT || 3000, function () {
