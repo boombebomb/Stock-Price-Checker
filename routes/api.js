@@ -84,16 +84,29 @@ module.exports = function (app) {
         return res.status(400).json({ error: 'Stock parameter required' });
       }
 
-      // แปลง stock เป็น array
-      const stockSymbols = Array.isArray(stock) ? stock : [stock];
+      // แปลง stock เป็น array และจัดการกรณีที่เป็น string หลายค่า
+      let stockSymbols;
+      if (Array.isArray(stock)) {
+        stockSymbols = stock;
+      } else if (typeof stock === 'string') {
+        stockSymbols = [stock];
+      } else {
+        stockSymbols = [stock.toString()];
+      }
       
       if (stockSymbols.length > 2) {
         return res.status(400).json({ error: 'Maximum 2 stocks allowed' });
       }
 
       const shouldLike = like === 'true' || like === true;
-      const clientIp = req.ip || req.connection.remoteAddress || '127.0.0.1';
-      const anonymizedIp = anonymizeIp(clientIp);
+      const clientIp = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] || '127.0.0.1';
+      const anonymizedIp = anonymizeIp(clientIp.toString());
+
+      console.log('Processing request:', { 
+        stocks: stockSymbols, 
+        shouldLike, 
+        ip: clientIp.toString().substring(0, 8) + '...' 
+      });
 
       // ดึงข้อมูลหุ้นทั้งหมด
       const stockDataPromises = stockSymbols.map(async (symbol) => {
@@ -112,18 +125,27 @@ module.exports = function (app) {
 
       // จัดรูปแบบผลลัพธ์
       if (stockSymbols.length === 1) {
-        // หุ้นเดียว
+        // หุ้นเดียว - ส่งกลับ object
+        console.log('Single stock result:', stockData[0]);
         res.json({ stockData: stockData[0] });
       } else {
-        // หุ้นสองตัว - คำนวณ rel_likes
+        // หุ้นสองตัว - คำนวณ rel_likes และส่งกลับ array
         const relLikes = stockData[0].likes - stockData[1].likes;
         
-        const result = stockData.map((stock, index) => ({
-          stock: stock.stock,
-          price: stock.price,
-          rel_likes: index === 0 ? relLikes : -relLikes
-        }));
+        const result = [
+          {
+            stock: stockData[0].stock,
+            price: stockData[0].price,
+            rel_likes: relLikes
+          },
+          {
+            stock: stockData[1].stock,
+            price: stockData[1].price,
+            rel_likes: -relLikes
+          }
+        ];
         
+        console.log('Two stocks result:', result);
         res.json({ stockData: result });
       }
       
